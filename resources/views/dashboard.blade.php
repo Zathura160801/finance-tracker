@@ -8,6 +8,48 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* Mobile responsive tweaks for dashboard */
+        @media (max-width: 768px) {
+
+            .grid-3,
+            .grid-12 {
+                display: block;
+            }
+
+            .accounts-grid,
+            .list-cards,
+            .table-container {
+                overflow: visible;
+            }
+
+            .accounts-grid .glass-card,
+            .list-item-card {
+                width: 100% !important;
+                box-sizing: border-box;
+            }
+
+            .quick-actions-bar {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .quick-actions-bar .btn {
+                flex: 1 1 calc(50% - 6px);
+            }
+
+            .table-container table {
+                width: 100%;
+                display: block;
+                overflow-x: auto;
+            }
+
+            .stat-card {
+                margin-bottom: 0.75rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -104,6 +146,102 @@
                         {{ number_format($debts->where('type', 'receivable')->sum(fn($d) => $d->account->currency->code == 'TWD' ? $d->remaining_amount * 500 : $d->remaining_amount), 2, ',', '.') }}
                     </div>
                 </div>
+
+                <!-- Modal Edit Deposit -->
+                <div id="modalDepositEdit" class="modal-overlay"
+                    onclick="closeModalOnOverlay(event, 'modalDepositEdit')">
+                    <div class="modal-content glass-panel">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Edit Deposit</h3>
+                            <button class="close-btn" onclick="closeModal('modalDepositEdit')">&times;</button>
+                        </div>
+                        <form id="form-deposit-edit" action="" method="POST">
+                            @csrf
+                            <input type="hidden" name="_method" value="PUT">
+                            <div class="form-group">
+                                <label class="form-label">Nama/Keperluan Deposit</label>
+                                <input type="text" name="name" id="edit-deposit-name" class="form-control"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rekening Sumber Pembayaran (Uang Keluar)</label>
+                                <select name="account_id" id="edit-deposit-account" class="form-control" required>
+                                    @foreach ($accounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->name }}
+                                            ({{ $acc->currency->symbol }} {{ number_format($acc->balance, 2) }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nominal Uang Jaminan (Deposit)</label>
+                                <input type="number" name="amount" id="edit-deposit-amount" class="form-control"
+                                    step="0.01" min="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Keterangan Lainnya</label>
+                                <input type="text" name="description" id="edit-deposit-description"
+                                    class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary"
+                                style="width: 100%; margin-top: 1rem;">Simpan Perubahan</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Edit Hutang / Piutang -->
+                <div id="modalDebtEdit" class="modal-overlay" onclick="closeModalOnOverlay(event, 'modalDebtEdit')">
+                    <div class="modal-content glass-panel">
+                        <div class="modal-header">
+                            <h3 class="modal-title">Edit Hutang / Piutang</h3>
+                            <button class="close-btn" onclick="closeModal('modalDebtEdit')">&times;</button>
+                        </div>
+                        <form id="form-debt-edit" action="" method="POST">
+                            @csrf
+                            <input type="hidden" name="_method" value="PUT">
+                            <div class="form-group">
+                                <label class="form-label">Kontak Debitur/Kreditur</label>
+                                <select name="contact_id" id="edit-debt-contact" class="form-control" required>
+                                    @foreach ($contacts as $c)
+                                        <option value="{{ $c->id }}">{{ $c->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Jenis Catatan</label>
+                                <select name="type" id="edit-debt-type" class="form-control" required>
+                                    <option value="debt">Hutang</option>
+                                    <option value="receivable">Piutang</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Rekening Transaksi</label>
+                                <select name="account_id" id="edit-debt-account" class="form-control" required>
+                                    @foreach ($accounts as $acc)
+                                        <option value="{{ $acc->id }}">{{ $acc->name }}
+                                            ({{ $acc->currency_code }})</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Nominal Pinjaman</label>
+                                <input type="number" name="amount" id="edit-debt-amount" class="form-control"
+                                    step="0.01" min="0.01" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Tanggal Jatuh Tempo (Opsional)</label>
+                                <input type="date" name="due_date" id="edit-debt-due-date" class="form-control">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Keterangan / Alasan Pinjaman</label>
+                                <input type="text" name="description" id="edit-debt-description"
+                                    class="form-control">
+                            </div>
+                            <button type="submit" class="btn btn-primary"
+                                style="width: 100%; margin-top: 1rem;">Simpan Perubahan</button>
+                        </form>
+                    </div>
+                </div>
             </div>
 
             <!-- Active Deposits -->
@@ -150,7 +288,8 @@
                                         onclick="openAccountEditModal(this)" data-id="{{ $acc->id }}"
                                         data-name="{{ htmlspecialchars($acc->name, ENT_QUOTES) }}"
                                         data-account_number="{{ $acc->account_number ?? '' }}"
-                                        data-type="{{ $acc->type }}" data-currency_code="{{ $acc->currency_code }}"
+                                        data-type="{{ $acc->type }}"
+                                        data-currency_code="{{ $acc->currency_code }}"
                                         data-balance="{{ $acc->balance }}">
                                         <i data-lucide="edit-2" style="width:14px; height:14px;"></i>
                                     </button>
@@ -436,11 +575,20 @@
                                                 {{ $d->due_date->format('d/m/Y') }}</span>
                                         @endif
                                     </div>
-                                    <div class="item-right">
+                                    <div class="item-right" style="display:flex; gap:8px; align-items:center;">
                                         <span class="item-amount debt">{{ $d->account->currency->symbol }}
                                             {{ number_format($d->remaining_amount, 2, ',', '.') }}</span>
                                         <span class="badge"
                                             style="background: rgba(244, 63, 94, 0.1); color: #fca5a5; font-size: 0.65rem; padding: 2px 6px;">Pending</span>
+                                        <button class="btn btn-secondary" style="padding:6px; font-size:0.7rem;"
+                                            onclick="openDebtEditModal(this)" data-id="{{ $d->id }}"
+                                            data-contact_id="{{ $d->contact_id }}"
+                                            data-account_id="{{ $d->account_id }}" data-type="{{ $d->type }}"
+                                            data-amount="{{ $d->amount }}"
+                                            data-due_date="{{ $d->due_date?->format('Y-m-d') ?? '' }}"
+                                            data-description="{{ htmlspecialchars($d->description ?? '', ENT_QUOTES) }}">
+                                            <i data-lucide="edit-2" style="width:12px; height:12px;"></i>
+                                        </button>
                                     </div>
                                 </div>
                             @empty
@@ -463,11 +611,20 @@
                                                 {{ $d->due_date->format('d/m/Y') }}</span>
                                         @endif
                                     </div>
-                                    <div class="item-right">
+                                    <div class="item-right" style="display:flex; gap:8px; align-items:center;">
                                         <span class="item-amount receivable">{{ $d->account->currency->symbol }}
                                             {{ number_format($d->remaining_amount, 2, ',', '.') }}</span>
                                         <span class="badge"
                                             style="background: rgba(16, 185, 129, 0.1); color: #a7f3d0; font-size: 0.65rem; padding: 2px 6px;">Pending</span>
+                                        <button class="btn btn-secondary" style="padding:6px; font-size:0.7rem;"
+                                            onclick="openDebtEditModal(this)" data-id="{{ $d->id }}"
+                                            data-contact_id="{{ $d->contact_id }}"
+                                            data-account_id="{{ $d->account_id }}" data-type="{{ $d->type }}"
+                                            data-amount="{{ $d->amount }}"
+                                            data-due_date="{{ $d->due_date?->format('Y-m-d') ?? '' }}"
+                                            data-description="{{ htmlspecialchars($d->description ?? '', ENT_QUOTES) }}">
+                                            <i data-lucide="edit-2" style="width:12px; height:12px;"></i>
+                                        </button>
                                     </div>
                                 </div>
                             @empty
@@ -503,12 +660,19 @@
                                         <span class="item-subtitle">{{ $dep->description }}</span>
                                     @endif
                                 </div>
-                                <div class="item-right">
+                                <div class="item-right" style="display:flex; gap:8px; align-items:center;">
                                     <span class="item-amount"
                                         style="color: #fef08a;">{{ $dep->account->currency->symbol }}
                                         {{ number_format($dep->amount, 2, ',', '.') }}</span>
                                     <span class="badge"
                                         style="background: rgba(234, 179, 8, 0.1); color: #fef08a; font-size: 0.65rem; padding: 2px 6px;">Aktif</span>
+                                    <button class="btn btn-secondary" style="padding:6px; font-size:0.7rem;"
+                                        onclick="openDepositEditModal(this)" data-id="{{ $dep->id }}"
+                                        data-name="{{ htmlspecialchars($dep->name, ENT_QUOTES) }}"
+                                        data-account_id="{{ $dep->account_id }}" data-amount="{{ $dep->amount }}"
+                                        data-description="{{ htmlspecialchars($dep->description ?? '', ENT_QUOTES) }}">
+                                        <i data-lucide="edit-2" style="width:12px; height:12px;"></i>
+                                    </button>
                                 </div>
                             </div>
                         @empty
@@ -1156,6 +1320,44 @@
             }
 
             openModal('modalTransactionEdit');
+        }
+
+        // Debt edit modal opener
+        function openDebtEditModal(button) {
+            const id = button.getAttribute('data-id');
+            const contactId = button.getAttribute('data-contact_id');
+            const accountId = button.getAttribute('data-account_id');
+            const type = button.getAttribute('data-type');
+            const amount = button.getAttribute('data-amount');
+            const dueDate = button.getAttribute('data-due_date') || '';
+            const description = button.getAttribute('data-description') || '';
+
+            const form = document.getElementById('form-debt-edit');
+            form.action = `/debts/${id}`;
+            document.getElementById('edit-debt-contact').value = contactId;
+            document.getElementById('edit-debt-account').value = accountId;
+            document.getElementById('edit-debt-type').value = type;
+            document.getElementById('edit-debt-amount').value = parseFloat(amount || 0).toFixed(2);
+            document.getElementById('edit-debt-due-date').value = dueDate;
+            document.getElementById('edit-debt-description').value = description;
+            openModal('modalDebtEdit');
+        }
+
+        // Deposit edit modal opener
+        function openDepositEditModal(button) {
+            const id = button.getAttribute('data-id');
+            const name = button.getAttribute('data-name') || '';
+            const accountId = button.getAttribute('data-account_id') || '';
+            const amount = button.getAttribute('data-amount') || '';
+            const description = button.getAttribute('data-description') || '';
+
+            const form = document.getElementById('form-deposit-edit');
+            form.action = `/deposits/${id}`;
+            document.getElementById('edit-deposit-name').value = name;
+            document.getElementById('edit-deposit-account').value = accountId;
+            document.getElementById('edit-deposit-amount').value = parseFloat(amount || 0).toFixed(2);
+            document.getElementById('edit-deposit-description').value = description;
+            openModal('modalDepositEdit');
         }
     </script>
 </body>
