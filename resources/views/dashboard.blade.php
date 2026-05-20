@@ -219,7 +219,8 @@
                                 <select name="account_id" id="edit-debt-account" class="form-control" required>
                                     @foreach ($accounts as $acc)
                                         <option value="{{ $acc->id }}">{{ $acc->name }}
-                                            ({{ $acc->currency_code }})</option>
+                                            ({{ $acc->currency_code }})
+                                        </option>
                                     @endforeach
                                 </select>
                             </div>
