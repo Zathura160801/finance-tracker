@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\DebtService;
 use App\Models\Contact;
 use App\Models\Debt;
+use App\Services\DebtService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class DebtController extends Controller
@@ -16,7 +17,7 @@ class DebtController extends Controller
         $this->debtService = $debtService;
     }
 
-    public function storeContact(Request $request)
+    public function storeContact(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
@@ -29,7 +30,7 @@ class DebtController extends Controller
         return redirect()->route('dashboard')->with('success', 'Kontak baru berhasil ditambahkan!');
     }
 
-    public function storeDebt(Request $request)
+    public function storeDebt(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'contact_id' => 'required|exists:contacts,id',
@@ -51,13 +52,14 @@ class DebtController extends Controller
             );
 
             $label = ($validated['type'] === 'debt') ? 'Hutang' : 'Piutang';
+
             return redirect()->route('dashboard')->with('success', "$label baru berhasil dicatat!");
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Gagal mencatat hutang/piutang: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal mencatat hutang/piutang: '.$e->getMessage());
         }
     }
 
-    public function storeRepayment(Request $request)
+    public function storeRepayment(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'debt_id' => 'required|exists:debts,id',
@@ -76,7 +78,36 @@ class DebtController extends Controller
 
             return redirect()->route('dashboard')->with('success', 'Pembayaran cicilan berhasil dicatat!');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Gagal mencatat cicilan: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal mencatat cicilan: '.$e->getMessage());
+        }
+    }
+
+    public function update(Request $request, Debt $debt): RedirectResponse
+    {
+        $validated = $request->validate([
+            'contact_id' => 'required|exists:contacts,id',
+            'amount' => 'required|numeric|min:0.01',
+            'due_date' => 'nullable|date',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $this->debtService->updateDebt($debt, $validated);
+
+            return redirect()->route('dashboard')->with('success', 'Catatan hutang/piutang berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui hutang/piutang: '.$e->getMessage());
+        }
+    }
+
+    public function destroy(Debt $debt): RedirectResponse
+    {
+        try {
+            $this->debtService->deleteDebt($debt);
+
+            return redirect()->route('dashboard')->with('success', 'Catatan hutang/piutang berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard')->with('error', 'Gagal menghapus hutang/piutang: '.$e->getMessage());
         }
     }
 }

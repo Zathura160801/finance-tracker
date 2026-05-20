@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\DepositService;
 use App\Models\Deposit;
+use App\Services\DepositService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class DepositController extends Controller
@@ -15,7 +16,7 @@ class DepositController extends Controller
         $this->depositService = $depositService;
     }
 
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => 'required|string|max:150',
@@ -34,11 +35,28 @@ class DepositController extends Controller
 
             return redirect()->route('dashboard')->with('success', 'Deposit jaminan baru berhasil dicatat!');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Gagal mencatat deposit: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal mencatat deposit: '.$e->getMessage());
         }
     }
 
-    public function return(Request $request)
+    public function update(Request $request, Deposit $deposit): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:150',
+            'amount' => 'required|numeric|min:0.01',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $this->depositService->updateDeposit($deposit, $validated);
+
+            return redirect()->route('dashboard')->with('success', 'Deposit berhasil diperbarui!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui deposit: '.$e->getMessage());
+        }
+    }
+
+    public function returnDeposit(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'deposit_id' => 'required|exists:deposits,id',
@@ -55,7 +73,18 @@ class DepositController extends Controller
 
             return redirect()->route('dashboard')->with('success', 'Pengembalian deposit berhasil dicatat!');
         } catch (\Exception $e) {
-            return redirect()->back()->withInput()->with('error', 'Gagal memproses pengembalian: ' . $e->getMessage());
+            return redirect()->back()->withInput()->with('error', 'Gagal memproses pengembalian: '.$e->getMessage());
+        }
+    }
+
+    public function destroy(Deposit $deposit): RedirectResponse
+    {
+        try {
+            $this->depositService->deleteDeposit($deposit);
+
+            return redirect()->route('dashboard')->with('success', 'Deposit berhasil dihapus!');
+        } catch (\Exception $e) {
+            return redirect()->route('dashboard')->with('error', 'Gagal menghapus deposit: '.$e->getMessage());
         }
     }
 }

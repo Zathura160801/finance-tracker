@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Account;
 use App\Models\Debt;
 use App\Models\DebtRepayment;
-use App\Models\Account;
-use Illuminate\Support\Facades\DB;
+use App\Models\Transaction;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DebtService
 {
@@ -42,9 +43,9 @@ class DebtService
             // Debt (borrowing) means cash comes IN (income)
             // Receivable (lending) means cash goes OUT (expense)
             $txType = ($type === 'debt') ? 'income' : 'expense';
-            $txDescription = ($type === 'debt') 
-                ? "Penerimaan hutang baru: " . ($description ?? '')
-                : "Pemberian pinjaman (piutang) baru: " . ($description ?? '');
+            $txDescription = ($type === 'debt')
+                ? 'Penerimaan hutang baru: '.($description ?? '')
+                : 'Pemberian pinjaman (piutang) baru: '.($description ?? '');
 
             $transaction = $this->transactionService->createTransaction(
                 accountId: $accountId,
@@ -56,15 +57,61 @@ class DebtService
             );
 
             // 2. Create debt record
-            $debt = new Debt();
+            $debt = new Debt;
             $debt->contact_id = $contactId;
             $debt->type = $type;
             $debt->account_id = $accountId;
             $debt->amount = $amount;
             $debt->remaining_amount = $amount;
+            $debt->transaction_id = $transaction->id;
             $debt->due_date = $dueDate ? Carbon::parse($dueDate) : null;
             $debt->status = 'pending';
             $debt->description = $description;
+            $debt->save();
+
+            return $debt;
+        });
+    }
+
+    /**
+     * Update debt details and realign the linked cash flow when nominal changes.
+     */
+    public function updateDebt(Debt $debt, array $data): Debt
+    {
+        return DB::transaction(function () use ($debt, $data) {
+            $debt->loadMissing('transaction', 'repayments');
+
+            $newAmount = array_key_exists('amount', $data)
+                ? (float) $data['amount']
+                : (float) $debt->amount;
+
+            $repaymentsTotal = (float) $debt->repayments()->sum('amount');
+
+            if ($newAmount < $repaymentsTotal) {
+                throw new \InvalidArgumentException('Nominal baru tidak boleh lebih kecil dari total cicilan yang sudah dibayar.');
+            }
+
+            if ($debt->transaction) {
+                $txType = $debt->type === 'debt' ? 'income' : 'expense';
+                $this->transactionService->updateTransaction($debt->transaction, [
+                    'type' => $txType,
+                    'account_id' => $debt->account_id,
+                    'amount' => $newAmount,
+                    'description' => $this->buildDebtTransactionDescription($debt->type, $data['description'] ?? $debt->description),
+                    'transaction_date' => $debt->transaction->transaction_date,
+                ]);
+            }
+
+            $debt->contact_id = $data['contact_id'] ?? $debt->contact_id;
+            $debt->due_date = array_key_exists('due_date', $data)
+                ? ($data['due_date'] ? Carbon::parse($data['due_date']) : null)
+                : $debt->due_date;
+            $debt->description = array_key_exists('description', $data)
+                ? $data['description']
+                : $debt->description;
+            $debt->amount = $newAmount;
+            $debt->remaining_amount = max(0, $newAmount - $repaymentsTotal);
+            $debt->status = $debt->remaining_amount <= 0.01 ? 'paid_off' : 'pending';
             $debt->save();
 
             return $debt;
@@ -82,7 +129,7 @@ class DebtService
     ): DebtRepayment {
         return DB::transaction(function () use ($debtId, $accountId, $amount, $description) {
             $debt = Debt::findOrFail($debtId);
-            
+
             if ($debt->status === 'paid_off') {
                 throw new \InvalidArgumentException('This debt has already been fully paid off.');
             }
@@ -100,9 +147,9 @@ class DebtService
             // Debt payback (we pay) means cash goes OUT (expense)
             // Receivable payback (we receive) means cash comes IN (income)
             $txType = ($debt->type === 'debt') ? 'expense' : 'income';
-            $txDescription = ($debt->type === 'debt') 
-                ? "Pembayaran cicilan hutang: " . ($description ?? '')
-                : "Penerimaan cicilan piutang: " . ($description ?? '');
+            $txDescription = ($debt->type === 'debt')
+                ? 'Pembayaran cicilan hutang: '.($description ?? '')
+                : 'Penerimaan cicilan piutang: '.($description ?? '');
 
             $transaction = $this->transactionService->createTransaction(
                 accountId: $accountId,
@@ -122,7 +169,7 @@ class DebtService
             $debt->save();
 
             // 3. Create debt repayment record
-            $repayment = new DebtRepayment();
+            $repayment = new DebtRepayment;
             $repayment->debt_id = $debtId;
             $repayment->transaction_id = $transaction->id;
             $repayment->amount = $amount;
@@ -130,5 +177,63 @@ class DebtService
 
             return $repayment;
         });
+    }
+
+    /**
+     * Delete a debt and all its cash flow transactions.
+     */
+    public function deleteDebt(Debt $debt): void
+    {
+        DB::transaction(function () use ($debt) {
+            $debt->loadMissing('repayments.transaction', 'transaction');
+
+            // Delete all repayments and reverse their cash flows
+            foreach ($debt->repayments as $repayment) {
+                if ($repayment->transaction) {
+                    $this->transactionService->deleteTransaction($repayment->transaction);
+                }
+                $repayment->delete();
+            }
+
+            // Delete the initial transaction
+            if ($debt->transaction_id) {
+                $transaction = Transaction::find($debt->transaction_id);
+                if ($transaction) {
+                    $this->transactionService->deleteTransaction($transaction);
+                }
+            }
+
+            $debt->delete();
+        });
+    }
+
+    /**
+     * Delete a debt repayment and reverse its cash flow transaction.
+     */
+    public function deleteRepayment(DebtRepayment $repayment): void
+    {
+        DB::transaction(function () use ($repayment) {
+            $debt = $repayment->debt;
+
+            // Reverse the remaining amount
+            $debt->remaining_amount += $repayment->amount;
+            $debt->status = 'pending'; // Since remaining amount increased, it's no longer fully paid off
+            $debt->save();
+
+            if ($repayment->transaction) {
+                $this->transactionService->deleteTransaction($repayment->transaction);
+            }
+
+            $repayment->delete();
+        });
+    }
+
+    private function buildDebtTransactionDescription(string $type, ?string $description): string
+    {
+        $prefix = $type === 'debt'
+            ? 'Penerimaan hutang baru: '
+            : 'Pemberian pinjaman (piutang) baru: ';
+
+        return trim($prefix.($description ?? ''));
     }
 }

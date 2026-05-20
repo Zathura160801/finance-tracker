@@ -14,6 +14,7 @@ class Debt extends Model
         'account_id',
         'amount',
         'remaining_amount',
+        'transaction_id',
         'due_date',
         'status', // pending, paid_off
         'description',
@@ -33,6 +34,11 @@ class Debt extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class);
     }
 
     public function repayments(): HasMany

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('account_id')->constrained('accounts')->onDelete('cascade');
             $table->decimal('amount', 15, 2);
             $table->string('status', 20)->default('active'); // active, returned
+            $table->foreignId('transaction_id')->nullable()->constrained('transactions')->onDelete('set null');
             $table->foreignId('return_transaction_id')->nullable()->constrained('transactions')->onDelete('set null');
             $table->text('description')->nullable();
             $table->timestamps();

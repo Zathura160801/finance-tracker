@@ -2,10 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\Deposit;
 use App\Models\Account;
-use Illuminate\Support\Facades\DB;
+use App\Models\Deposit;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class DepositService
 {
@@ -29,8 +29,8 @@ class DepositService
             $account = Account::findOrFail($accountId);
 
             // 1. Create cash flow transaction (deposit is an expense cash flow)
-            $txDescription = "Pembayaran deposit jaminan: " . $name . ($description ? " (" . $description . ")" : "");
-            
+            $txDescription = 'Pembayaran deposit jaminan: '.$name.($description ? ' ('.$description.')' : '');
+
             $transaction = $this->transactionService->createTransaction(
                 accountId: $accountId,
                 type: 'expense',
@@ -41,12 +41,53 @@ class DepositService
             );
 
             // 2. Create deposit record
-            $deposit = new Deposit();
+            $deposit = new Deposit;
             $deposit->name = $name;
             $deposit->account_id = $accountId;
             $deposit->amount = $amount;
             $deposit->status = 'active';
+            $deposit->transaction_id = $transaction->id;
             $deposit->description = $description;
+            $deposit->save();
+
+            return $deposit;
+        });
+    }
+
+    /**
+     * Update deposit details and keep its cash flow aligned.
+     */
+    public function updateDeposit(Deposit $deposit, array $data): Deposit
+    {
+        return DB::transaction(function () use ($deposit, $data) {
+            $deposit->loadMissing('transaction', 'returnTransaction');
+
+            $newAmount = array_key_exists('amount', $data)
+                ? (float) $data['amount']
+                : (float) $deposit->amount;
+
+            if ($deposit->status === 'returned' && $newAmount !== (float) $deposit->amount) {
+                throw new \InvalidArgumentException('Nominal deposit yang sudah dikembalikan tidak dapat diubah dari layar ini.');
+            }
+
+            if ($deposit->transaction && $deposit->status === 'active') {
+                $this->transactionService->updateTransaction($deposit->transaction, [
+                    'type' => 'expense',
+                    'account_id' => $deposit->account_id,
+                    'amount' => $newAmount,
+                    'description' => $this->buildDepositDescription(
+                        $data['name'] ?? $deposit->name,
+                        $data['description'] ?? $deposit->description
+                    ),
+                    'transaction_date' => $deposit->transaction->transaction_date,
+                ]);
+            }
+
+            $deposit->name = $data['name'] ?? $deposit->name;
+            $deposit->description = array_key_exists('description', $data)
+                ? $data['description']
+                : $deposit->description;
+            $deposit->amount = $newAmount;
             $deposit->save();
 
             return $deposit;
@@ -68,8 +109,8 @@ class DepositService
             $account = Account::findOrFail($accountId);
 
             // 1. Create cash flow transaction (return of deposit is an income cash flow)
-            $txDescription = "Pengembalian deposit jaminan: " . $deposit->name . ($description ? " (" . $description . ")" : "");
-            
+            $txDescription = 'Pengembalian deposit jaminan: '.$deposit->name.($description ? ' ('.$description.')' : '');
+
             $transaction = $this->transactionService->createTransaction(
                 accountId: $accountId,
                 type: 'income',
@@ -83,11 +124,36 @@ class DepositService
             $deposit->status = 'returned';
             $deposit->return_transaction_id = $transaction->id;
             if ($description) {
-                $deposit->description = trim(($deposit->description ?? '') . " | Catatan Pengembalian: " . $description);
+                $deposit->description = trim(($deposit->description ?? '').' | Catatan Pengembalian: '.$description);
             }
             $deposit->save();
 
             return $deposit;
         });
+    }
+
+    /**
+     * Delete a deposit and reverse its related cash flow transactions.
+     */
+    public function deleteDeposit(Deposit $deposit): void
+    {
+        DB::transaction(function () use ($deposit) {
+            $deposit->loadMissing('transaction', 'returnTransaction');
+
+            if ($deposit->returnTransaction) {
+                $this->transactionService->deleteTransaction($deposit->returnTransaction);
+            }
+
+            if ($deposit->transaction) {
+                $this->transactionService->deleteTransaction($deposit->transaction);
+            }
+
+            $deposit->delete();
+        });
+    }
+
+    private function buildDepositDescription(string $name, ?string $description): string
+    {
+        return 'Pembayaran deposit jaminan: '.$name.($description ? ' ('.$description.')' : '');
     }
 }

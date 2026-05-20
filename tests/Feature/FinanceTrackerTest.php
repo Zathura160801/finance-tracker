@@ -2,28 +2,32 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
-use App\Models\Currency;
-use App\Models\Category;
 use App\Models\Account;
+use App\Models\Category;
 use App\Models\Contact;
-use App\Models\Debt;
-use App\Models\Deposit;
-use App\Services\TransactionService;
+use App\Models\Currency;
 use App\Services\DebtService;
 use App\Services\DepositService;
+use App\Services\TransactionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class FinanceTrackerTest extends TestCase
 {
     use RefreshDatabase;
 
     protected Currency $idr;
+
     protected Currency $twd;
+
     protected Category $makan;
+
     protected Category $gaji;
+
     protected Account $cashIdr;
+
     protected Account $bankTwd;
+
     protected Contact $budi;
 
     protected function setUp(): void
@@ -35,25 +39,25 @@ class FinanceTrackerTest extends TestCase
             'code' => 'IDR',
             'name' => 'Rupiah',
             'symbol' => 'Rp',
-            'exchange_rate_to_usd' => 16000.00
+            'exchange_rate_to_usd' => 16000.00,
         ]);
 
         $this->twd = Currency::create([
             'code' => 'TWD',
             'name' => 'Taiwan Dollar',
             'symbol' => 'NT$',
-            'exchange_rate_to_usd' => 32.00
+            'exchange_rate_to_usd' => 32.00,
         ]);
 
         // 2. Seed categories
         $this->makan = Category::create([
             'name' => 'Makan',
-            'type' => 'expense'
+            'type' => 'expense',
         ]);
 
         $this->gaji = Category::create([
             'name' => 'Gaji',
-            'type' => 'income'
+            'type' => 'income',
         ]);
 
         // 3. Seed accounts
@@ -61,19 +65,19 @@ class FinanceTrackerTest extends TestCase
             'name' => 'Cash IDR',
             'type' => 'cash',
             'currency_code' => 'IDR',
-            'balance' => 100000.00
+            'balance' => 100000.00,
         ]);
 
         $this->bankTwd = Account::create([
             'name' => 'Bank TWD',
             'type' => 'bank',
             'currency_code' => 'TWD',
-            'balance' => 1000.00
+            'balance' => 1000.00,
         ]);
 
         // 4. Seed contact
         $this->budi = Contact::create([
-            'name' => 'Budi'
+            'name' => 'Budi',
         ]);
     }
 
@@ -110,6 +114,59 @@ class FinanceTrackerTest extends TestCase
     }
 
     /**
+     * Test updating a transaction rebalances the account correctly.
+     */
+    public function test_update_transaction_rebalances_account_balance()
+    {
+        $transactionService = app(TransactionService::class);
+
+        $transaction = $transactionService->createTransaction(
+            accountId: $this->cashIdr->id,
+            type: 'expense',
+            amount: 20000.00,
+            categoryId: $this->makan->id,
+            description: 'Makan siang'
+        );
+
+        $transactionService->updateTransaction($transaction, [
+            'type' => 'expense',
+            'account_id' => $this->cashIdr->id,
+            'amount' => 50000.00,
+            'category_id' => $this->makan->id,
+            'description' => 'Makan malam',
+        ]);
+
+        $this->cashIdr->refresh();
+        $transaction->refresh();
+
+        $this->assertEquals(50000.00, $this->cashIdr->balance);
+        $this->assertEquals(50000.00, (float) $transaction->amount);
+    }
+
+    /**
+     * Test deleting a transaction restores the original balance.
+     */
+    public function test_delete_transaction_restores_balance()
+    {
+        $transactionService = app(TransactionService::class);
+
+        $transaction = $transactionService->createTransaction(
+            accountId: $this->cashIdr->id,
+            type: 'expense',
+            amount: 20000.00,
+            categoryId: $this->makan->id,
+            description: 'Makan'
+        );
+
+        $transactionService->deleteTransaction($transaction);
+
+        $this->cashIdr->refresh();
+
+        $this->assertEquals(100000.00, $this->cashIdr->balance);
+        $this->assertDatabaseMissing('transactions', ['id' => $transaction->id]);
+    }
+
+    /**
      * Test transfer between accounts (same currency).
      */
     public function test_transfer_same_currency()
@@ -120,7 +177,7 @@ class FinanceTrackerTest extends TestCase
             'name' => 'Cash IDR Kedua',
             'type' => 'cash',
             'currency_code' => 'IDR',
-            'balance' => 10000.00
+            'balance' => 10000.00,
         ]);
 
         $transactionService->createTransaction(
@@ -246,5 +303,49 @@ class FinanceTrackerTest extends TestCase
         $this->assertEquals(1000.00, $this->bankTwd->balance);
         $this->assertEquals('returned', $deposit->status);
         $this->assertNotNull($deposit->return_transaction_id);
+    }
+
+    /**
+     * Test deleting a deposit reverses the active cash flow.
+     */
+    public function test_delete_deposit_restores_balance()
+    {
+        $depositService = app(DepositService::class);
+
+        $deposit = $depositService->createDeposit(
+            name: 'Deposit Kost',
+            accountId: $this->cashIdr->id,
+            amount: 30000.00,
+            description: 'Deposit bulanan'
+        );
+
+        $depositService->deleteDeposit($deposit);
+
+        $this->cashIdr->refresh();
+
+        $this->assertEquals(100000.00, $this->cashIdr->balance);
+        $this->assertDatabaseMissing('deposits', ['id' => $deposit->id]);
+    }
+
+    /**
+     * Test account deletion is blocked when related transactions exist.
+     */
+    public function test_account_delete_is_blocked_when_related_transactions_exist()
+    {
+        $transactionService = app(TransactionService::class);
+
+        $transactionService->createTransaction(
+            accountId: $this->cashIdr->id,
+            type: 'expense',
+            amount: 10000.00,
+            categoryId: $this->makan->id,
+            description: 'Snack'
+        );
+
+        $response = $this->withoutMiddleware()
+            ->delete(route('accounts.destroy', $this->cashIdr));
+
+        $response->assertRedirect(route('dashboard'));
+        $this->assertDatabaseHas('accounts', ['id' => $this->cashIdr->id]);
     }
 }

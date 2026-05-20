@@ -12,6 +12,7 @@ class Deposit extends Model
         'account_id',
         'amount',
         'status', // active, returned
+        'transaction_id',
         'return_transaction_id',
         'description',
     ];
@@ -23,6 +24,11 @@ class Deposit extends Model
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+
+    public function transaction(): BelongsTo
+    {
+        return $this->belongsTo(Transaction::class, 'transaction_id');
     }
 
     public function returnTransaction(): BelongsTo
