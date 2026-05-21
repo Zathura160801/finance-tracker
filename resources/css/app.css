@@ -666,3 +666,85 @@ select.form-control option {
 .tab-pane.active {
     display: block;
 }
+
+/* Mobile drawer & enhanced responsive rules */
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+
+    header {
+        gap: 0.75rem;
+        padding: 0.9rem 1rem;
+    }
+
+    /* hide large quick actions in header on small screens (will be in drawer) */
+    header .quick-actions-bar {
+        display: none;
+    }
+
+    /* hamburger button */
+    .hamburger-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.04);
+        color: var(--text-primary);
+        cursor: pointer;
+        margin-left: 8px;
+    }
+
+    /* Mobile drawer */
+    .mobile-drawer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        transform: translateY(110%);
+        background: linear-gradient(180deg, rgba(6,6,10,0.95), rgba(18,18,29,0.98));
+        border-top: 1px solid rgba(255,255,255,0.04);
+        padding: 0.75rem 1rem 1.5rem 1rem;
+        z-index: 1100;
+        transition: transform 0.28s cubic-bezier(0.2,0,0,1);
+        box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .mobile-drawer.active {
+        transform: translateY(0%);
+    }
+
+    .mobile-drawer .drawer-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-direction: column;
+    }
+
+    .mobile-drawer .btn {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 0.7rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Make table cells wrap better on very small screens */
+    .table-container td,
+    .table-container th {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.82rem;
+    }
+
+    /* Reduce card paddings for mobile */
+    .glass-card, .glass-panel {
+        padding: 1rem;
+    }
+
+    .stat-value {
+        font-size: 1.4rem;
+    }
+}
