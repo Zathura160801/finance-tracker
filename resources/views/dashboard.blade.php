@@ -22,10 +22,6 @@
                 <div class="logo-text">SakuPremium</div>
             </div>
 
-            <button class="hamburger-btn" aria-label="Open menu" onclick="toggleDrawer()">
-                <i data-lucide="menu" style="width:18px; height:18px;"></i>
-            </button>
-
             <div class="quick-actions-bar">
                 <button class="btn btn-secondary" onclick="openModal('modalAccount')">
                     <i data-lucide="plus-circle"></i> Rekening Baru
@@ -645,36 +641,6 @@
                     </div>
                 </section>
             </div>
-        </div>
-    </div>
-
-    <!-- MOBILE DRAWER OVERLAY -->
-    <div id="mobileDrawerOverlay" class="mobile-drawer-overlay" aria-hidden="true" onclick="toggleDrawer()"></div>
-
-    <!-- MOBILE DRAWER -->
-    <div id="mobileDrawer" class="mobile-drawer" aria-hidden="true">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
-            <div style="font-weight:700;">Menu Cepat</div>
-            <button class="close-btn" onclick="toggleDrawer()">&times;</button>
-        </div>
-        <div class="drawer-row">
-            <button class="btn btn-secondary" onclick="toggleDrawer(); openModal('modalAccount')">
-                <i data-lucide="plus-circle"></i> Rekening Baru
-            </button>
-            <button class="btn btn-secondary" onclick="toggleDrawer(); openModal('modalContact')">
-                <i data-lucide="user-plus"></i> Kontak Baru
-            </button>
-            <button class="btn btn-primary" onclick="toggleDrawer(); openModal('modalTransaction')">
-                <i data-lucide="receipt"></i> Catat Transaksi
-            </button>
-            <button class="btn btn-secondary" style="border-color: rgba(244, 63, 94, 0.4); color: #fca5a5;"
-                onclick="toggleDrawer(); openModal('modalDebt')">
-                <i data-lucide="users"></i> Hutang / Piutang
-            </button>
-            <button class="btn btn-secondary" style="border-color: rgba(234, 179, 8, 0.4); color: #fef08a;"
-                onclick="toggleDrawer(); openModal('modalDeposit')">
-                <i data-lucide="shield-check"></i> Uang Deposit
-            </button>
         </div>
     </div>
 
@@ -1351,21 +1317,6 @@
             document.getElementById('edit-deposit-amount').value = parseFloat(amount || 0).toFixed(2);
             document.getElementById('edit-deposit-description').value = description;
             openModal('modalDepositEdit');
-        }
-
-        // Mobile drawer toggle with overlay and body lock
-        function toggleDrawer() {
-            const d = document.getElementById('mobileDrawer');
-            const o = document.getElementById('mobileDrawerOverlay');
-            if (!d || !o) return;
-            const isActive = !d.classList.contains('active');
-            d.classList.toggle('active', isActive);
-            o.classList.toggle('active', isActive);
-            document.body.classList.toggle('no-scroll', isActive);
-            d.setAttribute('aria-hidden', !isActive);
-            o.setAttribute('aria-hidden', !isActive);
-            // ensure icons inside are rendered
-            lucide.createIcons();
         }
     </script>
 </body>
