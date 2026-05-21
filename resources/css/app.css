@@ -1,8 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap");
 
 :root {
-    --font-heading: 'Outfit', sans-serif;
-    --font-body: 'Plus Jakarta Sans', sans-serif;
+    --font-heading: "Outfit", sans-serif;
+    --font-body: "Plus Jakarta Sans", sans-serif;
 
     /* Sleek Harmonious HSL Palette */
     --bg-base: #06060c;
@@ -11,33 +11,33 @@
     --border-color: rgba(255, 255, 255, 0.06);
     --border-glow: rgba(139, 92, 246, 0.2);
 
-    --primary: #8b5cf6;       /* Violet */
+    --primary: #8b5cf6; /* Violet */
     --primary-light: #a78bfa;
     --primary-glow: rgba(139, 92, 246, 0.4);
-    
-    --secondary: #06b6d4;     /* Cyan */
+
+    --secondary: #06b6d4; /* Cyan */
     --secondary-glow: rgba(6, 182, 212, 0.4);
 
-    --accent: #f43f5e;        /* Rose */
+    --accent: #f43f5e; /* Rose */
     --accent-glow: rgba(244, 63, 94, 0.3);
 
-    --success: #10b981;       /* Emerald */
+    --success: #10b981; /* Emerald */
     --success-glow: rgba(16, 185, 129, 0.2);
 
-    --danger: #ef4444;        /* Rose-Red */
+    --danger: #ef4444; /* Rose-Red */
     --danger-glow: rgba(239, 68, 68, 0.2);
 
     --text-primary: #f8fafc;
     --text-secondary: #94a3b8;
     --text-muted: #64748b;
-    
+
     --shadow-premium: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
     --shadow-glow: 0 0 25px var(--primary-glow);
-    
+
     --radius-sm: 8px;
     --radius-md: 12px;
     --radius-lg: 20px;
-    
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -49,10 +49,22 @@
 
 body {
     background-color: var(--bg-base);
-    background-image: 
-        radial-gradient(at 0% 0%, rgba(139, 92, 246, 0.08) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(6, 182, 212, 0.06) 0px, transparent 50%),
-        radial-gradient(at 50% 50%, rgba(244, 63, 94, 0.03) 0px, transparent 50%);
+    background-image:
+        radial-gradient(
+            at 0% 0%,
+            rgba(139, 92, 246, 0.08) 0px,
+            transparent 50%
+        ),
+        radial-gradient(
+            at 100% 100%,
+            rgba(6, 182, 212, 0.06) 0px,
+            transparent 50%
+        ),
+        radial-gradient(
+            at 50% 50%,
+            rgba(244, 63, 94, 0.03) 0px,
+            transparent 50%
+        );
     background-attachment: fixed;
     color: var(--text-primary);
     font-family: var(--font-body);
@@ -62,7 +74,12 @@ body {
     overflow-x: hidden;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: var(--font-heading);
     font-weight: 600;
     letter-spacing: -0.02em;
@@ -129,12 +146,19 @@ h1, h2, h3, h4, h5, h6 {
     gap: 2rem;
 }
 
-.span-4 { grid-column: span 4; }
-.span-8 { grid-column: span 8; }
-.span-12 { grid-column: span 12; }
+.span-4 {
+    grid-column: span 4;
+}
+.span-8 {
+    grid-column: span 8;
+}
+.span-12 {
+    grid-column: span 12;
+}
 
 @media (max-width: 1024px) {
-    .span-4, .span-8 {
+    .span-4,
+    .span-8 {
         grid-column: span 12;
     }
 }
@@ -197,7 +221,9 @@ header {
 }
 
 .btn-primary:hover {
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5), var(--shadow-glow);
+    box-shadow:
+        0 6px 20px rgba(139, 92, 246, 0.5),
+        var(--shadow-glow);
     transform: translateY(-1px);
 }
 
@@ -293,7 +319,7 @@ header {
 }
 
 .account-pill::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
@@ -302,11 +328,21 @@ header {
     background: var(--primary);
 }
 
-.account-pill.cash::before { background: var(--secondary); }
-.account-pill.bank::before { background: var(--primary); }
-.account-pill.card::before { background: var(--accent); }
-.account-pill.e_wallet::before { background: var(--success); }
-.account-pill.deposit::before { background: #eab308; }
+.account-pill.cash::before {
+    background: var(--secondary);
+}
+.account-pill.bank::before {
+    background: var(--primary);
+}
+.account-pill.card::before {
+    background: var(--accent);
+}
+.account-pill.e_wallet::before {
+    background: var(--success);
+}
+.account-pill.deposit::before {
+    background: #eab308;
+}
 
 .account-name {
     font-weight: 600;
@@ -600,8 +636,12 @@ select.form-control option {
     font-size: 1.1rem;
 }
 
-.item-amount.debt { color: #f43f5e; }
-.item-amount.receivable { color: #10b981; }
+.item-amount.debt {
+    color: #f43f5e;
+}
+.item-amount.receivable {
+    color: #10b981;
+}
 
 .section-title {
     font-size: 1.25rem;
@@ -649,7 +689,7 @@ select.form-control option {
 }
 
 .tab-btn.active::after {
-    content: '';
+    content: "";
     position: absolute;
     bottom: -1px;
     left: 0;
@@ -691,8 +731,8 @@ select.form-control option {
         width: 40px;
         height: 40px;
         border-radius: 10px;
-        background: rgba(255,255,255,0.03);
-        border: 1px solid rgba(255,255,255,0.04);
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.04);
         color: var(--text-primary);
         cursor: pointer;
         margin-left: 8px;
@@ -705,12 +745,16 @@ select.form-control option {
         left: 0;
         right: 0;
         transform: translateY(110%);
-        background: linear-gradient(180deg, rgba(6,6,10,0.95), rgba(18,18,29,0.98));
-        border-top: 1px solid rgba(255,255,255,0.04);
+        background: linear-gradient(
+            180deg,
+            rgba(6, 6, 10, 0.95),
+            rgba(18, 18, 29, 0.98)
+        );
+        border-top: 1px solid rgba(255, 255, 255, 0.04);
         padding: 0.75rem 1rem 1.5rem 1rem;
         z-index: 1100;
-        transition: transform 0.28s cubic-bezier(0.2,0,0,1);
-        box-shadow: 0 -10px 30px rgba(0,0,0,0.6);
+        transition: transform 0.28s cubic-bezier(0.2, 0, 0, 1);
+        box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
     }
@@ -739,8 +783,38 @@ select.form-control option {
         font-size: 0.82rem;
     }
 
+    /* Allow description cells to wrap on small screens */
+    .table-container td[title],
+    .table-container td[style*="text-overflow: ellipsis"] {
+        white-space: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        max-width: 100% !important;
+    }
+
+    /* Make pagination buttons wrap and shrink */
+    .btn[aria-current],
+    .btn {
+        /* generic selector for pagination */
+        padding: 0.5rem 0.6rem;
+        font-size: 0.85rem;
+        min-width: 36px;
+    }
+
+    /* List cards: don't limit height on very small screens */
+    .list-cards {
+        max-height: none;
+    }
+
+    /* Modal full width on very small devices */
+    .modal-content {
+        max-width: 96%;
+        margin: 0 2%;
+    }
+
     /* Reduce card paddings for mobile */
-    .glass-card, .glass-panel {
+    .glass-card,
+    .glass-panel {
         padding: 1rem;
     }
 

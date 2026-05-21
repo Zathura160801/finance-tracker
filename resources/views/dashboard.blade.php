@@ -706,10 +706,12 @@
             <button class="btn btn-primary" onclick="toggleDrawer(); openModal('modalTransaction')">
                 <i data-lucide="receipt"></i> Catat Transaksi
             </button>
-            <button class="btn btn-secondary" style="border-color: rgba(244, 63, 94, 0.4); color: #fca5a5;" onclick="toggleDrawer(); openModal('modalDebt')">
+            <button class="btn btn-secondary" style="border-color: rgba(244, 63, 94, 0.4); color: #fca5a5;"
+                onclick="toggleDrawer(); openModal('modalDebt')">
                 <i data-lucide="users"></i> Hutang / Piutang
             </button>
-            <button class="btn btn-secondary" style="border-color: rgba(234, 179, 8, 0.4); color: #fef08a;" onclick="toggleDrawer(); openModal('modalDeposit')">
+            <button class="btn btn-secondary" style="border-color: rgba(234, 179, 8, 0.4); color: #fef08a;"
+                onclick="toggleDrawer(); openModal('modalDeposit')">
                 <i data-lucide="shield-check"></i> Uang Deposit
             </button>
         </div>
