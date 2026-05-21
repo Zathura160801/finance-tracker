@@ -8,48 +8,6 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        /* Mobile responsive tweaks for dashboard */
-        @media (max-width: 768px) {
-
-            .grid-3,
-            .grid-12 {
-                display: block;
-            }
-
-            .accounts-grid,
-            .list-cards,
-            .table-container {
-                overflow: visible;
-            }
-
-            .accounts-grid .glass-card,
-            .list-item-card {
-                width: 100% !important;
-                box-sizing: border-box;
-            }
-
-            .quick-actions-bar {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.5rem;
-            }
-
-            .quick-actions-bar .btn {
-                flex: 1 1 calc(50% - 6px);
-            }
-
-            .table-container table {
-                width: 100%;
-                display: block;
-                overflow-x: auto;
-            }
-
-            .stat-card {
-                margin-bottom: 0.75rem;
-            }
-        }
-    </style>
 </head>
 
 <body>
