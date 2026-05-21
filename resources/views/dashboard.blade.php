@@ -648,6 +648,9 @@
         </div>
     </div>
 
+    <!-- MOBILE DRAWER OVERLAY -->
+    <div id="mobileDrawerOverlay" class="mobile-drawer-overlay" aria-hidden="true" onclick="toggleDrawer()"></div>
+
     <!-- MOBILE DRAWER -->
     <div id="mobileDrawer" class="mobile-drawer" aria-hidden="true">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
@@ -1350,11 +1353,17 @@
             openModal('modalDepositEdit');
         }
 
-        // Mobile drawer toggle
+        // Mobile drawer toggle with overlay and body lock
         function toggleDrawer() {
             const d = document.getElementById('mobileDrawer');
-            if (!d) return;
-            d.classList.toggle('active');
+            const o = document.getElementById('mobileDrawerOverlay');
+            if (!d || !o) return;
+            const isActive = !d.classList.contains('active');
+            d.classList.toggle('active', isActive);
+            o.classList.toggle('active', isActive);
+            document.body.classList.toggle('no-scroll', isActive);
+            d.setAttribute('aria-hidden', !isActive);
+            o.setAttribute('aria-hidden', !isActive);
             // ensure icons inside are rendered
             lucide.createIcons();
         }

@@ -172,7 +172,9 @@ header {
 }
 
 /* Hide hamburger by default; only show it on small screens */
-.hamburger-btn { display: none; }
+.hamburger-btn {
+    display: none;
+}
 
 .logo-container {
     display: flex;
@@ -516,6 +518,23 @@ tr:last-child td {
     color: var(--text-secondary);
     cursor: pointer;
     font-size: 1.5rem;
+
+    /* overlay behind drawer */
+    .mobile-drawer-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s ease;
+        z-index: 1050;
+        backdrop-filter: blur(2px);
+    }
+
+    .mobile-drawer-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
     line-height: 1;
     transition: var(--transition-smooth);
 }
@@ -756,8 +775,14 @@ select.form-control option {
         border-top: 1px solid rgba(255, 255, 255, 0.04);
         padding: 0.75rem 1rem 1.5rem 1rem;
         @media (max-width: 1024px) {
-            .quick-actions-bar { flex-wrap: wrap; gap: 0.5rem; }
-            .quick-actions-bar .btn { padding: 0.5rem 0.8rem; font-size: 0.86rem; }
+            .quick-actions-bar {
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+            .quick-actions-bar .btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.86rem;
+            }
         }
         border-top-right-radius: 12px;
     }
@@ -777,6 +802,12 @@ select.form-control option {
         justify-content: flex-start;
         padding: 0.7rem 1rem;
         font-size: 0.95rem;
+    }
+
+    /* prevent body scroll when drawer is open */
+    .no-scroll {
+        overflow: hidden;
+        touch-action: none;
     }
 
     /* Make table cells wrap better on very small screens */
