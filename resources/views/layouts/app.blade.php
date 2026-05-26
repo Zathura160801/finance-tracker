@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
     <!-- Lucide Icons via CDN -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Flatpickr CSS & JS CDN for Sleek Datepicker -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <style>
         /* Responsive Layout styles */
         .app-wrapper {
@@ -291,6 +295,23 @@
                 closeModal(modalId);
             }
         }
+
+        // Initialize Flatpickr datepickers globally
+        document.addEventListener("DOMContentLoaded", function() {
+            flatpickr(".datepicker-date", {
+                theme: "dark",
+                dateFormat: "Y-m-d",
+                allowInput: true
+            });
+
+            flatpickr(".datepicker-datetime", {
+                theme: "dark",
+                enableTime: true,
+                dateFormat: "Y-m-d H:i",
+                time_24hr: true,
+                allowInput: true
+            });
+        });
     </script>
     @yield('scripts')
 </body>

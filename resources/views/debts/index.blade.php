@@ -366,7 +366,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Tanggal Jatuh Tempo (Opsional)</label>
-                <input type="date" name="due_date" class="form-control">
+                <input type="text" name="due_date" class="form-control datepicker-date" placeholder="Pilih tanggal jatuh tempo...">
             </div>
             <div class="form-group">
                 <label class="form-label">Keterangan / Alasan</label>
@@ -401,7 +401,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label">Tanggal Jatuh Tempo (Opsional)</label>
-                <input type="date" name="due_date" id="edit-debt-due-date" class="form-control">
+                <input type="text" name="due_date" id="edit-debt-due-date" class="form-control datepicker-date" placeholder="Pilih tanggal jatuh tempo...">
             </div>
             <div class="form-group">
                 <label class="form-label">Keterangan / Alasan</label>
@@ -498,7 +498,11 @@
 
         document.getElementById('edit-debt-contact').value = contact_id;
         document.getElementById('edit-debt-amount').value = amount;
-        document.getElementById('edit-debt-due-date').value = due_date;
+        // Set date via Flatpickr API
+        const dueDatePicker = document.getElementById('edit-debt-due-date')._flatpickr;
+        if (dueDatePicker) {
+            dueDatePicker.setDate(due_date || null, true);
+        }
         document.getElementById('edit-debt-description').value = description;
 
         const form = document.getElementById('form-debt-edit');

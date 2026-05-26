@@ -9,14 +9,20 @@ use App\Models\Currency;
 use App\Models\Debt;
 use App\Models\Deposit;
 use App\Models\Transaction;
+use App\Services\ExchangeRateService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
+    public function __construct(protected ExchangeRateService $rateService) {}
+
     public function index()
     {
+        // Auto-sync exchange rates once per day (non-blocking, cached)
+        $this->rateService->autoSyncIfStale();
         $accounts = Account::with('currency')->orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
 
@@ -66,6 +72,8 @@ class DashboardController extends Controller
 
         $netWorthIdr = $netWorthByCurrency->get('IDR', 0.0);
 
+        $lastRateSync = Cache::get('exchange_rates_synced_today');
+
         $recentTransactions = Transaction::with(['account.currency', 'destinationAccount.currency', 'category'])
             ->orderBy('transaction_date', 'desc')
             ->orderBy('id', 'desc')
@@ -79,7 +87,8 @@ class DashboardController extends Controller
             'currencies',
             'assetSeparated',
             'netWorthByCurrency',
-            'netWorthIdr'
+            'netWorthIdr',
+            'lastRateSync'
         ) + [
             'monthlyIncomeIdr' => $monthlyIncomeIdr,
             'monthlyExpenseIdr' => $monthlyExpenseIdr,

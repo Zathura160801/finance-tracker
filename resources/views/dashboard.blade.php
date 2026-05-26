@@ -56,6 +56,43 @@
                     @endforeach
                 </div>
             </div>
+
+            <!-- EXCHANGE RATE UPDATE PANEL -->
+            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+                    <div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; display: flex; align-items: center; gap: 5px;">
+                            <i data-lucide="refresh-cw" style="width: 11px; height: 11px;"></i> Kurs Live
+                        </div>
+                        <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 2px;">
+                            @if($lastRateSync)
+                                <span style="color: #86efac;">&#x2022; Tersinkron</span>
+                                {{ \Carbon\Carbon::parse($lastRateSync)->timezone('Asia/Jakarta')->format('d M Y, H:i') }} WIB
+                            @else
+                                <span style="color: #fca5a5;">&#x2022; Belum disinkron hari ini</span>
+                            @endif
+                        </div>
+                    </div>
+                    <form action="{{ route('currencies.update-rates') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn btn-secondary"
+                            style="font-size: 0.72rem; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 5px; border-color: rgba(139,92,246,0.3);"
+                            title="Ambil kurs terbaru dari internet">
+                            <i data-lucide="refresh-cw" style="width: 12px; height: 12px;"></i>
+                            Perbarui Kurs
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Mini rate display for key currencies -->
+                <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.65rem;">
+                    @foreach($currencies->whereNotIn('code', ['USD']) as $cur)
+                        <span style="font-size: 0.68rem; padding: 2px 7px; border-radius: 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); color: var(--text-secondary);">
+                            1 USD = {{ number_format(1 / ($cur->exchange_rate_to_usd > 0 ? $cur->exchange_rate_to_usd : 1), 2, ',', '.') }} {{ $cur->code }}
+                        </span>
+                    @endforeach
+                </div>
+            </div>
         </div>
 
         <!-- 2. Cash Flow Ringkasan Bulanan -->

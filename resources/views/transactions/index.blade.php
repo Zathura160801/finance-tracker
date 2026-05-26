@@ -62,12 +62,12 @@
 
             <div class="form-group" style="margin: 0;">
                 <label class="form-label">Dari Tanggal</label>
-                <input type="date" name="date_from" class="form-control" value="{{ $transactionFilters['date_from'] ?? '' }}">
+                <input type="text" name="date_from" id="filter-date-from" class="form-control datepicker-date" value="{{ $transactionFilters['date_from'] ?? '' }}" placeholder="Pilih tanggal...">
             </div>
 
             <div class="form-group" style="margin: 0;">
                 <label class="form-label">Hingga Tanggal</label>
-                <input type="date" name="date_to" class="form-control" value="{{ $transactionFilters['date_to'] ?? '' }}">
+                <input type="text" name="date_to" id="filter-date-to" class="form-control datepicker-date" value="{{ $transactionFilters['date_to'] ?? '' }}" placeholder="Pilih tanggal...">
             </div>
 
             <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
@@ -274,7 +274,7 @@
 
             <div class="form-group">
                 <label class="form-label">Tanggal Transaksi</label>
-                <input type="datetime-local" name="transaction_date" id="tx-date" class="form-control">
+                <input type="text" name="transaction_date" id="tx-date" class="form-control datepicker-datetime" placeholder="Pilih tanggal & jam...">
             </div>
 
             <div class="form-group">
@@ -349,7 +349,7 @@
 
             <div class="form-group">
                 <label class="form-label">Tanggal Transaksi</label>
-                <input type="datetime-local" name="transaction_date" id="edit-tx-date" class="form-control" required>
+                <input type="text" name="transaction_date" id="edit-tx-date" class="form-control datepicker-datetime" placeholder="Pilih tanggal & jam..." required>
             </div>
 
             <div class="form-group">
@@ -394,15 +394,11 @@
     }
 
     function openCreateTransactionModal() {
-        // Set date to current time in local timezone formatted as Y-m-d H:i
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-        const hours = String(now.getHours()).padStart(2, '0');
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        
-        document.getElementById('tx-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        // Set date to current time via Flatpickr API
+        const txDatePicker = document.getElementById('tx-date')._flatpickr;
+        if (txDatePicker) {
+            txDatePicker.setDate(new Date(), true);
+        }
         document.getElementById('tx-type').value = 'expense';
         toggleTransferFields('tx');
         openModal('modalTransaction');
@@ -425,7 +421,11 @@
         document.getElementById('edit-tx-amount').value = amount;
         document.getElementById('edit-tx-dest-amount').value = destination_amount;
         document.getElementById('edit-tx-category').value = category_id;
-        document.getElementById('edit-tx-date').value = transaction_date;
+        // Set date via Flatpickr API
+        const editDatePicker = document.getElementById('edit-tx-date')._flatpickr;
+        if (editDatePicker) {
+            editDatePicker.setDate(transaction_date, true);
+        }
         document.getElementById('edit-tx-description').value = description;
 
         toggleTransferFields('edit-tx');

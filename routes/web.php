@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\CurrencyController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DebtController;
 use App\Http\Controllers\DepositController;
@@ -35,3 +36,6 @@ Route::post('/deposits', [DepositController::class, 'store'])->name('deposits.st
 Route::post('/deposits/return', [DepositController::class, 'returnDeposit'])->name('deposits.return');
 Route::put('/deposits/{deposit}', [DepositController::class, 'update'])->name('deposits.update');
 Route::delete('/deposits/{deposit}', [DepositController::class, 'destroy'])->name('deposits.destroy');
+
+// Currencies - Exchange Rate Sync
+Route::post('/currencies/update-rates', [CurrencyController::class, 'updateRates'])->name('currencies.update-rates');
