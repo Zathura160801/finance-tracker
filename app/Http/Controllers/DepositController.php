@@ -16,6 +16,18 @@ class DepositController extends Controller
         $this->depositService = $depositService;
     }
 
+    public function index()
+    {
+        $accounts = \App\Models\Account::with('currency')->orderBy('name')->get();
+
+        $deposits = Deposit::with(['account.currency', 'returnTransaction'])
+            ->orderBy('status', 'asc') // active first
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('deposits.index', compact('deposits', 'accounts'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -33,7 +45,7 @@ class DepositController extends Controller
                 description: $validated['description'] ?? null
             );
 
-            return redirect()->route('dashboard')->with('success', 'Deposit jaminan baru berhasil dicatat!');
+            return redirect()->route('deposits.index')->with('success', 'Deposit jaminan baru berhasil dicatat!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal mencatat deposit: '.$e->getMessage());
         }
@@ -50,7 +62,7 @@ class DepositController extends Controller
         try {
             $this->depositService->updateDeposit($deposit, $validated);
 
-            return redirect()->route('dashboard')->with('success', 'Deposit berhasil diperbarui!');
+            return redirect()->route('deposits.index')->with('success', 'Deposit berhasil diperbarui!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui deposit: '.$e->getMessage());
         }
@@ -71,7 +83,7 @@ class DepositController extends Controller
                 description: $validated['description'] ?? null
             );
 
-            return redirect()->route('dashboard')->with('success', 'Pengembalian deposit berhasil dicatat!');
+            return redirect()->route('deposits.index')->with('success', 'Pengembalian deposit berhasil dicatat!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal memproses pengembalian: '.$e->getMessage());
         }
@@ -82,9 +94,9 @@ class DepositController extends Controller
         try {
             $this->depositService->deleteDeposit($deposit);
 
-            return redirect()->route('dashboard')->with('success', 'Deposit berhasil dihapus!');
+            return redirect()->route('deposits.index')->with('success', 'Deposit berhasil dihapus!');
         } catch (\Exception $e) {
-            return redirect()->route('dashboard')->with('error', 'Gagal menghapus deposit: '.$e->getMessage());
+            return redirect()->route('deposits.index')->with('error', 'Gagal menghapus deposit: '.$e->getMessage());
         }
     }
 }

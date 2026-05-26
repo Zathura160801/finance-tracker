@@ -8,6 +8,14 @@ use Illuminate\Http\Request;
 
 class AccountController extends Controller
 {
+    public function index()
+    {
+        $accounts = Account::with('currency')->orderBy('name')->get();
+        $currencies = \App\Models\Currency::orderBy('code')->get();
+
+        return view('accounts.index', compact('accounts', 'currencies'));
+    }
+
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -20,7 +28,7 @@ class AccountController extends Controller
 
         Account::create($validated);
 
-        return redirect()->route('dashboard')->with('success', 'Akun berhasil ditambahkan!');
+        return redirect()->route('accounts.index')->with('success', 'Akun berhasil ditambahkan!');
     }
 
     public function update(Request $request, Account $account): RedirectResponse
@@ -35,17 +43,17 @@ class AccountController extends Controller
 
         $account->update($validated);
 
-        return redirect()->route('dashboard')->with('success', 'Akun berhasil diperbarui!');
+        return redirect()->route('accounts.index')->with('success', 'Akun berhasil diperbarui!');
     }
 
     public function destroy(Account $account): RedirectResponse
     {
         if ($account->transactions()->exists() || $account->incomingTransfers()->exists() || $account->debts()->exists() || $account->deposits()->exists()) {
-            return redirect()->route('dashboard')->with('error', 'Akun tidak bisa dihapus karena masih memiliki transaksi atau relasi terkait.');
+            return redirect()->route('accounts.index')->with('error', 'Akun tidak bisa dihapus karena masih memiliki transaksi atau relasi terkait.');
         }
 
         $account->delete();
 
-        return redirect()->route('dashboard')->with('success', 'Akun berhasil dihapus!');
+        return redirect()->route('accounts.index')->with('success', 'Akun berhasil dihapus!');
     }
 }

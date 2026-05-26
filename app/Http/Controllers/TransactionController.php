@@ -15,6 +15,44 @@ class TransactionController extends Controller
         $this->transactionService = $transactionService;
     }
 
+    public function index(Request $request)
+    {
+        $accounts = \App\Models\Account::with('currency')->orderBy('name')->get();
+        $categories = \App\Models\Category::orderBy('name')->get();
+
+        $transactionsQuery = Transaction::with(['account.currency', 'destinationAccount.currency', 'category'])
+            ->orderBy('transaction_date', 'desc')
+            ->orderBy('id', 'desc');
+
+        if ($request->filled('account_id')) {
+            $transactionsQuery->where(function ($query) use ($request) {
+                $query->where('account_id', $request->integer('account_id'))
+                    ->orWhere('destination_account_id', $request->integer('account_id'));
+            });
+        }
+
+        if ($request->filled('type')) {
+            $transactionsQuery->where('type', $request->string('type'));
+        }
+
+        if ($request->filled('category_id')) {
+            $transactionsQuery->where('category_id', $request->integer('category_id'));
+        }
+
+        if ($request->filled('date_from')) {
+            $transactionsQuery->whereDate('transaction_date', '>=', \Carbon\Carbon::parse($request->string('date_from')));
+        }
+
+        if ($request->filled('date_to')) {
+            $transactionsQuery->whereDate('transaction_date', '<=', \Carbon\Carbon::parse($request->string('date_to')));
+        }
+
+        $transactions = $transactionsQuery->paginate(15)->withQueryString();
+        $transactionFilters = $request->only(['account_id', 'type', 'category_id', 'date_from', 'date_to']);
+
+        return view('transactions.index', compact('transactions', 'accounts', 'categories', 'transactionFilters'));
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -40,7 +78,7 @@ class TransactionController extends Controller
                 destinationAmount: $validated['destination_amount'] ?? null
             );
 
-            return redirect()->route('dashboard')->with('success', 'Transaksi berhasil dicatat!');
+            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dicatat!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal mencatat transaksi: '.$e->getMessage());
         }
@@ -62,7 +100,7 @@ class TransactionController extends Controller
         try {
             $this->transactionService->updateTransaction($transaction, $validated);
 
-            return redirect()->route('dashboard')->with('success', 'Transaksi berhasil diperbarui!');
+            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil diperbarui!');
         } catch (\Exception $e) {
             return redirect()->back()->withInput()->with('error', 'Gagal memperbarui transaksi: '.$e->getMessage());
         }
@@ -73,9 +111,9 @@ class TransactionController extends Controller
         try {
             $this->transactionService->deleteTransaction($transaction);
 
-            return redirect()->route('dashboard')->with('success', 'Transaksi berhasil dihapus dan saldo dikembalikan!');
+            return redirect()->route('transactions.index')->with('success', 'Transaksi berhasil dihapus dan saldo dikembalikan!');
         } catch (\Exception $e) {
-            return redirect()->route('dashboard')->with('error', 'Gagal menghapus transaksi: '.$e->getMessage());
+            return redirect()->route('transactions.index')->with('error', 'Gagal menghapus transaksi: '.$e->getMessage());
         }
     }
 }

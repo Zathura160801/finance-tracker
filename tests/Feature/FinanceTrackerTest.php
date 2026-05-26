@@ -345,7 +345,7 @@ class FinanceTrackerTest extends TestCase
         $response = $this->withoutMiddleware()
             ->delete(route('accounts.destroy', $this->cashIdr));
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertRedirect(route('accounts.index'));
         $this->assertDatabaseHas('accounts', ['id' => $this->cashIdr->id]);
     }
 }

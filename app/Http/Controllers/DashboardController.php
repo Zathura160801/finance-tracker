@@ -15,44 +15,13 @@ use Illuminate\Support\Collection;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
         $accounts = Account::with('currency')->orderBy('name')->get();
         $categories = Category::orderBy('name')->get();
-        $incomeCategories = $categories->where('type', 'income');
-        $expenseCategories = $categories->where('type', 'expense');
 
         $currencies = Currency::orderBy('code')->get();
         $currencyMap = $currencies->keyBy('code');
-
-        $transactionsQuery = Transaction::with(['account.currency', 'destinationAccount.currency', 'category'])
-            ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc');
-
-        if ($request->filled('account_id')) {
-            $transactionsQuery->where(function ($query) use ($request) {
-                $query->where('account_id', $request->integer('account_id'))
-                    ->orWhere('destination_account_id', $request->integer('account_id'));
-            });
-        }
-
-        if ($request->filled('type')) {
-            $transactionsQuery->where('type', $request->string('type'));
-        }
-
-        if ($request->filled('category_id')) {
-            $transactionsQuery->where('category_id', $request->integer('category_id'));
-        }
-
-        if ($request->filled('date_from')) {
-            $transactionsQuery->whereDate('transaction_date', '>=', Carbon::parse($request->string('date_from')));
-        }
-
-        if ($request->filled('date_to')) {
-            $transactionsQuery->whereDate('transaction_date', '<=', Carbon::parse($request->string('date_to')));
-        }
-
-        $transactions = $transactionsQuery->paginate(10)->withQueryString();
 
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
@@ -99,29 +68,14 @@ class DashboardController extends Controller
 
         $recentTransactions = Transaction::with(['account.currency', 'destinationAccount.currency', 'category'])
             ->orderBy('transaction_date', 'desc')
-            ->orderBy('id', 'desc');
-
-        $contacts = Contact::orderBy('name')->get();
-
-        $debts = Debt::with(['contact', 'account.currency'])
-            ->where('status', 'pending')
-            ->orderBy('due_date', 'asc')
-            ->get();
-
-        $deposits = Deposit::with('account.currency')
-            ->where('status', 'active')
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
+            ->take(5)
             ->get();
 
         return view('dashboard', compact(
             'accounts',
             'categories',
-            'incomeCategories',
-            'expenseCategories',
-            'transactions',
-            'contacts',
-            'debts',
-            'deposits',
+            'recentTransactions',
             'currencies',
             'assetSeparated',
             'netWorthByCurrency',
@@ -131,7 +85,6 @@ class DashboardController extends Controller
             'monthlyExpenseIdr' => $monthlyExpenseIdr,
             'expenseCategoryStats' => $expenseCategoryStats,
             'incomeCategoryStats' => $incomeCategoryStats,
-            'transactionFilters' => $request->only(['account_id', 'type', 'category_id', 'date_from', 'date_to']),
         ]);
     }
 
